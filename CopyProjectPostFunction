@@ -33,9 +33,9 @@ Thread executorThread = new Thread(new Runnable() {
             // old method deprecated: 
             // ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(util.getUserByName(admins.first().name))
             JiraAuthenticationContext jiraAuthenticationContext = ComponentAccessor.getJiraAuthenticationContext()
-			      UserManager userManager = ComponentAccessor.getUserManager()
+ 	    UserManager userManager = ComponentAccessor.getUserManager()
             ApplicationUser user = userManager.getUserByName("admin")
-			      jiraAuthenticationContext.setLoggedInUser(user)
+	    jiraAuthenticationContext.setLoggedInUser(user)
             copyProject.doScript(inputs)
         }
     }

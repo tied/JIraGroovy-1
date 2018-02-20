@@ -1,0 +1,43 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.security.groups.GroupManager
+import com.atlassian.jira.user.ApplicationUser
+import com.atlassian.jira.user.util.UserManager
+import com.atlassian.jira.security.JiraAuthenticationContext
+import com.onresolve.scriptrunner.canned.jira.admin.CopyProject
+import org.apache.log4j.Logger
+
+def log = Logger.getLogger("com.onresolve.jira.groovy.MyScript")
+Thread executorThread = new Thread(new Runnable() {
+    void run() {
+        def copyProject = new CopyProject()
+        def inputs = [
+            (CopyProject.FIELD_SOURCE_PROJECT) : 'ITH',
+            (CopyProject.FIELD_TARGET_PROJECT) : 'EX',
+            (CopyProject.FIELD_TARGET_PROJECT_NAME) : "Example",
+            (CopyProject.FIELD_COPY_VERSIONS) : false,
+            (CopyProject.FIELD_COPY_COMPONENTS) : false,
+            (CopyProject.FIELD_COPY_ISSUES) : false,
+            (CopyProject.FIELD_COPY_DASH_AND_FILTERS) : false,
+        ]
+        def errorCollection = copyProject.doValidate(inputs, false)
+        if(errorCollection.hasAnyErrors()) {
+            log.warn("Couldn't create project: $errorCollection")
+        }
+        else {
+            def util = ComponentAccessor.getUserUtil()
+            GroupManager groupManager = ComponentAccessor.getGroupManager();
+            def adminsGroup = groupManager.getGroup("jira-administrators")
+            assert adminsGroup // must have jira-administrators group defined
+            def admins = util.getAllUsersInGroups([adminsGroup])
+            assert admins // must have at least one admin
+            // old method deprecated: 
+            // ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(util.getUserByName(admins.first().name))
+            JiraAuthenticationContext jiraAuthenticationContext = ComponentAccessor.getJiraAuthenticationContext()
+			      UserManager userManager = ComponentAccessor.getUserManager()
+            ApplicationUser user = userManager.getUserByName("admin")
+			      jiraAuthenticationContext.setLoggedInUser(user)
+            copyProject.doScript(inputs)
+        }
+    }
+})
+executorThread.start()

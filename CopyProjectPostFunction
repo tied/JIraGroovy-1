@@ -6,14 +6,22 @@ import com.atlassian.jira.security.JiraAuthenticationContext
 import com.onresolve.scriptrunner.canned.jira.admin.CopyProject
 import org.apache.log4j.Logger
 
-def log = Logger.getLogger("com.onresolve.jira.groovy.MyScript")
+// Get User Inputs 
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def pKey = customFieldManager.getCustomFieldObjectByName("Project Key")
+def pKeyValue = issue.getCustomFieldValue(pKey)
+def pName = customFieldManager.getCustomFieldObjectByName("Project Name")
+def pNameValue = issue.getCustomFieldValue(pName)
+
+// Copy-Project params
+def log = Logger.getLogger("com.onresolve.jira.groovy.CopyProject")
 Thread executorThread = new Thread(new Runnable() {
     void run() {
         def copyProject = new CopyProject()
         def inputs = [
             (CopyProject.FIELD_SOURCE_PROJECT) : 'ITH',
-            (CopyProject.FIELD_TARGET_PROJECT) : 'EX',
-            (CopyProject.FIELD_TARGET_PROJECT_NAME) : "Example",
+            (CopyProject.FIELD_TARGET_PROJECT) : pKeyValue,
+            (CopyProject.FIELD_TARGET_PROJECT_NAME) : pNameValue,
             (CopyProject.FIELD_COPY_VERSIONS) : false,
             (CopyProject.FIELD_COPY_COMPONENTS) : false,
             (CopyProject.FIELD_COPY_ISSUES) : false,
@@ -30,12 +38,11 @@ Thread executorThread = new Thread(new Runnable() {
             assert adminsGroup // must have jira-administrators group defined
             def admins = util.getAllUsersInGroups([adminsGroup])
             assert admins // must have at least one admin
-            // old method deprecated: 
             // ComponentAccessor.getJiraAuthenticationContext().setLoggedInUser(util.getUserByName(admins.first().name))
             JiraAuthenticationContext jiraAuthenticationContext = ComponentAccessor.getJiraAuthenticationContext()
- 	    UserManager userManager = ComponentAccessor.getUserManager()
-            ApplicationUser user = userManager.getUserByName("admin")
-	    jiraAuthenticationContext.setLoggedInUser(user)
+			UserManager userManager = ComponentAccessor.getUserManager()
+            ApplicationUser user = userManager.getUserByName("patricem")
+			jiraAuthenticationContext.setLoggedInUser(user)
             copyProject.doScript(inputs)
         }
     }
